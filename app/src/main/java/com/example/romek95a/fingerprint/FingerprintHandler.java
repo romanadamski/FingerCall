@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
 import android.support.v4.app.ActivityCompat;
+import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
@@ -41,5 +42,14 @@ public class FingerprintHandler extends FingerprintManager.AuthenticationCallbac
     public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
         super.onAuthenticationSucceeded(result);
         //odbieranie
+        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        TelecomManager tm = (TelecomManager) context
+                .getSystemService(Context.TELECOM_SERVICE);
+
+        if (tm == null) {
+            // whether you want to handle this is up to you really
+            throw new NullPointerException("tm == null");
+        }
+        //tm.acceptRingingCall();
     }
 }

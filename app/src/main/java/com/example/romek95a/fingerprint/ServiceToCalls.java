@@ -2,19 +2,18 @@ package com.example.romek95a.fingerprint;
 
 import android.Manifest;
 import android.app.KeyguardManager;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
+import android.os.IBinder;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,7 +32,11 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
-public class MainActivity extends AppCompatActivity {
+/**
+ * Created by romek95a on 09.07.2018.
+ */
+
+public class ServiceToCalls extends Service {
 
     private KeyStore keyStore;
     private static final String KEY_NAME = "EDMTDev";
@@ -41,22 +44,47 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private TelephonyManager telephonyManager;
     private PhoneStateListener phoneStateListener;
-    private Button start;
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        textView=(TextView) findViewById(R.id.textView);
-        start=(Button) findViewById(R.id.start);
-        start.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startService(new Intent(getApplicationContext(), ServiceToCalls.class));
-            }
-        });
-        //handleFingerprint();
 
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        throw new UnsupportedOperationException("Not yet implemented");
     }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        System.out.println("serwis ruszyl xd");
+        telephonyManager=(TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        phoneStateListener = new PhoneStateListener(){
+            @Override
+            public void onCallStateChanged(int state, String incomingNumber){
+                String number = incomingNumber;
+                handleFingerprint();
+                if (state == TelephonyManager.CALL_STATE_RINGING) {
+                    Toast.makeText(getApplicationContext(), "ktos dzwoni", Toast.LENGTH_LONG).show();
+                    //textView.setText("CALL_STATE_RINGING");
+                    handleFingerprint();
+                }
+                else if(state == TelephonyManager.CALL_STATE_IDLE) {
+                    //textView.setText("CALL_STATE_IDLE");
+
+                }
+                else if(state == TelephonyManager.CALL_STATE_OFFHOOK) {
+                    //textView.setText("CALL_STATE_OFFHOOK");
+
+                }
+                super.onCallStateChanged(state, incomingNumber);
+            }
+        };
+        telephonyManager.listen(phoneStateListener,PhoneStateListener.LISTEN_CALL_STATE);
+        return super.onStartCommand(intent, flags, startId);
+    }
+
     public void handleFingerprint(){
         KeyguardManager keyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
         FingerprintManager fingerprintManager = (FingerprintManager) getSystemService(FINGERPRINT_SERVICE);
@@ -84,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
     private boolean cipherInit() {
 
         try {
@@ -164,5 +191,4 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-
 }
